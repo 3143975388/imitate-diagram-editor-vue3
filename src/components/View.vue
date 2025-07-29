@@ -1,9 +1,11 @@
 <template>
   <div id="meta2d"></div>
+  <ContextMenu />
 </template>
 
 <script lang="ts" setup>
 import { onMounted, onUnmounted } from 'vue';
+import ContextMenu from './ContextMenu.vue'; // 导入右键菜单组件
 import {
   Meta2d,
   Pen,
@@ -22,9 +24,9 @@ import { register as registerEcharts } from '@meta2d/chart-diagram';
 import { formPens } from '@meta2d/form-diagram';
 import { chartsPens } from '@meta2d/le5le-charts';
 import { ftaPens, ftaPensbyCtx, ftaAnchors } from '@meta2d/fta-diagram';
-
+import {useEventbus} from "@/utils/useEventbus.ts";
 import { useSelection } from '@/services/selections';
-
+const event = useEventbus()
 const { select } = useSelection();
 
 const meta2dOptions: any = {
@@ -72,6 +74,8 @@ onMounted(() => {
   
   meta2d.on('active', active);
   meta2d.on('inactive', inactive);
+  event.customEmit('opened')
+  event.customEmit('load')
 });
 
 const active = (pens?: Pen[]) => {

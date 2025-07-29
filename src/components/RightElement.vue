@@ -10,6 +10,7 @@
       <t-tab-panel class="app-props" :value="3" label="布局">
       </t-tab-panel>
       <t-tab-panel class="app-props" :value="4" label="结构">
+        <Structure />
       </t-tab-panel>
     </t-tabs>
     <t-tabs :default-value="1" v-else-if="selections.mode === SelectionMode.Pen">
@@ -38,6 +39,7 @@ import PenProps from './PenProps.vue';
 import Event from './event/EventIndex.vue';
 import Data from './Data.vue';
 import Correspondence from './Correspondence.vue'
+import Structure from './Structure.vue';
 import { useSelection, SelectionMode } from '@/services/selections';
 
 const { selections } = useSelection();
