@@ -7,9 +7,9 @@
     <div class="ctx_item" v-if="isPens && !lockState || (!activePens[0]?.locked || activePens[0].locked === 0)" @click="lock('lock')">锁定</div>
     <div class="ctx_item" v-if="isPens && lockState || activePens[0]?.locked == 2" @click="lock('unlock')">解锁</div>
     <div class="ctx_item" v-show="isPens" @click="deletePens">删除</div>
-    <div class="ctx_item" v-show="isPens && !isCombined && activePens[0]?.name !== 'combine'" @click="combination('combine')">组合</div>
-    <div class="ctx_item" v-show="isPens && !isCombined && activePens[0]?.name !== 'combine'" @click="combination('combineAsState')">组合成状态</div>
-    <div class="ctx_item" v-show="isPens && isCombined || activePens[0]?.name === 'combine'" @click="combination('uncombine')">取消组合</div>
+    <div class="ctx_item" v-show="isPens && activePens[0]?.name !== 'combine'" @click="combination('combine')">组合</div>
+    <div class="ctx_item" v-show="isPens && activePens[0]?.name !== 'combine'" @click="combination('combineAsState')">组合成状态</div>
+    <div class="ctx_item" v-show="isPens && activePens[0]?.name === 'combine'" @click="combination('uncombine')">取消组合</div>
     <div class="ctx_item" v-show="isPens" @click="copy">复制</div>
     <div class="ctx_item" @click="paste">粘贴</div>
   </div>
