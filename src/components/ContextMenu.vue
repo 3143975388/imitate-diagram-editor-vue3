@@ -4,8 +4,8 @@
     <div class="ctx_item" v-show="isPens" @click="changeCoverage('bottom')">置底</div>
     <div class="ctx_item" v-show="isPens" @click="changeCoverage('up')">上一图层</div>
     <div class="ctx_item" v-show="isPens" @click="changeCoverage('down')">下一图层</div>
-    <div class="ctx_item" v-if="isPens && !lockState || (!activePens[0]?.locked || activePens[0].locked === 0)" @click="lock('lock')">锁定</div>
-    <div class="ctx_item" v-if="isPens && lockState || activePens[0]?.locked == 2" @click="lock('unlock')">解锁</div>
+    <div class="ctx_item" v-if="isPens && (!activePens[0]?.locked || activePens[0].locked === 0)" @click="lock('lock')">锁定</div>
+    <div class="ctx_item" v-if="isPens && activePens[0]?.locked == 2" @click="lock('unlock')">解锁</div>
     <div class="ctx_item" v-show="isPens" @click="deletePens">删除</div>
     <div class="ctx_item" v-show="isPens && activePens[0]?.name !== 'combine'" @click="combination('combine')">组合</div>
     <div class="ctx_item" v-show="isPens && activePens[0]?.name !== 'combine'" @click="combination('combineAsState')">组合成状态</div>
@@ -98,8 +98,7 @@ function changeCoverage(pos: 'top' | 'bottom' | 'up' | 'down') {
         if (index > -1){
           meta2d.store.data.pens.splice(index, 1);
           meta2d.store.data.pens.push(pen);
-          console.log("移动到末尾",meta2d.store.data.pens);
-          
+          console.log("移动到末尾",meta2d.store.data.pens);   
         }
       });
       break;
@@ -153,17 +152,18 @@ function changeCoverage(pos: 'top' | 'bottom' | 'up' | 'down') {
 function lock(state: 'lock' | 'unlock') {
   if (state === 'lock') {
     activePens.forEach(pen => {
-      meta2d.setValue({ id: pen.id, locked: 2 }, { render: true })
+      meta2d.canvas.updateValue(pen, {locked: 2});
     });
     lockState.value = true; // 修改锁定状态
   }else {
     // 解锁
     activePens.forEach(pen => {
-      meta2d.setValue({ id: pen.id, locked: 0 }, { render: true })
+      meta2d.canvas.updateValue(pen, {locked: 0});
     });
     lockState.value = false; // 修改解锁状态
   }
-  ctxMenu.value.blur()
+  meta2d.render(); // 重新渲染
+  ctxMenu.value.blur(); // 关闭菜单
 }
 
 function paste() {
