@@ -17,9 +17,11 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, onBeforeUnmount,defineExpose } from 'vue';
+import { ref, onMounted, onBeforeUnmount, defineExpose, watch, nextTick } from 'vue';
+import 'codemirror/theme/material-darker.css'; // 引入主题样式
 import CodeMirror from 'codemirror';
 import 'codemirror/lib/codemirror.css';
+import 'codemirror/addon/display/autorefresh'; // 自动刷新
 import 'codemirror/mode/javascript/javascript';
 
 interface Props {
@@ -36,19 +38,38 @@ let codeMirrorInstance: CodeMirror.Editor | null = null;
 const code = ref<string>('');
 
 // 暴露给父组件的方法
-const handleEnd = (value: string) => {
-  console.log('子组件的 handleEnd 被调用，传入值:', value);
+const handleEnd = (value: any) => {
+  // 确保值是字符串
+  let stringValue = value;
+  if (typeof value !== 'string') {
+    console.warn('传入的值不是字符串，尝试转换');
+    stringValue = JSON.stringify(value, null, 2);
+  }
+  
   if (codeMirrorInstance) {
-    // 将传入的 value 赋给编辑器
-    codeMirrorInstance.setValue(value);
+    codeMirrorInstance.setValue(stringValue);
     console.log('已将值赋给编辑器');
-    codeMirrorInstance.refresh(); // 强制刷新编辑器
+    
+    // 强制刷新
+    setTimeout(() => {
+      codeMirrorInstance?.refresh();
+      codeMirrorInstance?.focus();
+    }, 0);
   } else {
     console.warn('CodeMirror 实例未初始化，无法赋值');
   }
 };
 
-// ... (其余子组件代码保持不变) ...
+// 监听visible变化，确保编辑器可见时刷新
+watch(() => props.visible, async (newVal) => {
+  if (newVal && codeMirrorInstance) {
+    await nextTick();
+    setTimeout(() => {
+      codeMirrorInstance?.refresh();
+      codeMirrorInstance?.focus();
+    }, 150);
+  }
+});
 
 const handleClose = () => {
   emit('update:visible', false);
@@ -64,20 +85,29 @@ const handleConfirm = () => {
     const editorValue = codeMirrorInstance.getValue();
     console.log('编辑器确认时的值:', editorValue);
     emit('confirm', editorValue);
-    // 如果 handleEnd 是用来处理确认逻辑的，可以在这里调用
-    // handleEnd(editorValue); // 示例：在确认时调用 handleEnd
   }
 };
 
 onMounted(() => {
   if (editor.value) {
-    code.value = props.initialValue || ''; // 使用传入的初始值或空字符串
+    code.value = props.initialValue || '';
     codeMirrorInstance = CodeMirror.fromTextArea(editor.value, {
       mode: 'text/javascript',
-      lineNumbers: false,
+      lineNumbers: true, // 建议开启行号以便调试
+      theme: 'material-darker', // 添加主题确保暗色模式生效
+      lineWrapping: true,
+      autoRefresh: true // 确保自动刷新
     });
+    
+    // 初始设置值
     codeMirrorInstance.setValue(code.value);
-    codeMirrorInstance.refresh(); // 初始化时也刷新
+    
+    // 延迟刷新确保渲染正确
+    setTimeout(() => {
+      if (codeMirrorInstance) {
+        codeMirrorInstance.refresh();
+      }
+    }, 200);
   }
 });
 
@@ -88,7 +118,7 @@ onBeforeUnmount(() => {
   }
 });
 
-// 在脚本末尾暴露 handleEnd 方法
+// 暴露 handleEnd 方法
 defineExpose({
   handleEnd, // 将 handleEnd 暴露出去
 });
@@ -96,15 +126,26 @@ defineExpose({
 </script>
 
 <style scoped>
+/* 添加全局样式穿透 */
+:deep(.CodeMirror) {
+  height: 100% !important;
+  background: black !important;
+  color: aliceblue !important;
+  font-family: 'Fira Code', monospace !important;
+}
+
 :deep(.CodeMirror-scroll) {
   background: black !important;
   color: aliceblue !important;
+  min-height: 400px;
 }
+
 :deep(.CodeMirror-cursor) {
   border-left: 1px solid aliceblue;
 }
-.t-button {
-  margin: 0 10px;
+
+/* 确保编辑器容器高度 */
+div[style="height: 100%;"] {
+  min-height: 450px;
 }
-/* ... 其他样式 ... */
 </style>
