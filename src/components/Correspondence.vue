@@ -23,29 +23,29 @@
             <t-input v-model="http.interval" placeholder="请输入时间间隔：" />
           </t-form-item>
           <t-form-item label="请求头：" name="">
-            <t-button @click="showModal">...</t-button>
+            <t-button @click="showModal(index)">...</t-button>
           </t-form-item>
-          <CodeMirrorModal :visible="modalVisible" :code="code" @update:visible="modalVisible = $event" @update:code="code =$event" />
+          <CodeMirrorModal ref="codeMirrorModalRef" :visible="isModalVisible" :initialValue="initialValue" @confirm="handleConfirms" @cancel="handleCancels" />
           <t-button @click="removeHttp(index)" v-if="httpList.length > 1">删除</t-button>
+          <t-button @click="confirm(index)">确认</t-button>
         </t-form>
       </t-collapse-panel>
       <t-collapse-panel value="1" header="消息处理javascript">
         <t-form label-align="left">
           <t-form-item label="消息处理：" name=""><t-button @click="showModal">...</t-button></t-form-item>
         </t-form>
-        <CodeMirrorModal :visible="modalVisible" :code="code" @update:visible="modalVisible = $event" @update:code="code =$event" />
+        <!-- <CodeMirrorModal ref="codeMirrorModalRef" :visible="isModalVisible" :initialValue="initialValue" @confirm="handleConfirms" @cancel="handleCancels" /> -->
       </t-collapse-panel>
       <t-collapse-panel value="2" header="获取变量树">
-        
         <t-form label-align="left">
           <t-form-item label="获取地址：" name="url">
-            <t-input  placeholder="默认/api/：" />
+            <t-input  placeholder="" />
           </t-form-item>
           <t-form-item label="请求头：" name="">
             <t-button @click="showModal">...</t-button>
           </t-form-item>
         </t-form>
-        <CodeMirrorModal :visible="modalVisible" :code="code" @update:visible="modalVisible = $event" @update:code="code=$event" />
+        <!-- <CodeMirrorModal ref="codeMirrorModalRef" :visible="isModalVisible" :initialValue="initialValue" @confirm="handleConfirms" @cancel="handleCancels"/> -->
       </t-collapse-panel>
     </t-collapse>
     <t-button @click="addHttp">添加http通信</t-button>
@@ -53,20 +53,41 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { onMounted, ref ,nextTick} from 'vue';
 import CodeMirrorModal from './CodeMirrorModal.vue';
 const currentItem = ref<string[]>(['0']);
 const wsUrl = ref('');
 const sendMessage = ref('');
-const httpList = ref<Array<{ method: string; url: string; interval: string }>>([
+const httpList = ref<Array<{ method: string; url: string; interval: string; }>>([
   { method: '', url: '', interval: '' }
 ]);
+
+const codeMirrorModalRef = ref<InstanceType<typeof CodeMirrorModal> | null>(null);
+const isModalVisible = ref(false);
+const initialValue = ref('');
+const receivedCode = ref({ value: '' });
 
 const modalVisible = ref(false);
 const code = ref('');
 
-const showModal = () => {
-  modalVisible.value = true;
+const showModal = async(index: number) => {
+  console.log(index);
+  
+  const data = meta2d.store.data.networks;
+  if (data && data.length > 0) {
+    // data[index]?.headers去除掉Authorization这一项
+    initialValue.value = JSON.stringify(data[index]?.headers || {}, null, 2).replace(/,\s*"Authorization":\s*".*?"/, '');
+  }
+
+  isModalVisible.value = true;
+  await nextTick();
+  // 确保子组件实例存在，然后调用其暴露的方法
+  if (codeMirrorModalRef.value) {
+    // 调用子组件的 handleEnd 方法，并传递当前事件的值
+    (codeMirrorModalRef.value as any)[index].handleEnd(initialValue.value);
+  } else {
+    console.warn('codeMirrorModalRef 未定义或为 null');
+  }
 };
 
 const handleCodeChange = (newCode: string) => {
@@ -78,15 +99,89 @@ function addHttp() {
 }
 
 function removeHttp(index: number) {
-  if (httpList.value.length > 1) {
+  if (httpList.value.length > 1 && meta2d.store.data.networks !== undefined) {
     httpList.value.splice(index, 1);
+    // 从meta2d.store.data.networks中删除对应的http配置
+    if (meta2d.store.data.networks[index].name === 'http') {
+      meta2d.store.data.networks.splice(index, 1);
+    } else {
+      // 如果不是http，则需要找到对应的http配置并删除
+      const httpIndex = meta2d.store.data.networks.findIndex(network => network.name === 'http' + (index + 1));
+      if (httpIndex !== -1) {
+        meta2d.store.data.networks.splice(httpIndex, 1);
+      }
+    }
   }
 }
+
+function confirm(index: number) {
+  if(meta2d.store.data.networks === undefined) {
+    meta2d.store.data.networks=[{ //HTTP
+      name: 'http' + (index + 1),
+      protocol:'http' , 
+      url: httpList.value[index].url, 
+      method: httpList.value[index].method, 
+      headers: {
+        ...JSON.parse(receivedCode.value.value || '{}'),
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      },
+      interval:parseInt(httpList.value[index].interval) || 0,
+    }];
+  } else {
+    meta2d.store.data.networks[index] = { //HTTP
+      name: 'http' + (index + 1),
+      protocol:'http' , 
+      url: httpList.value[index].url, 
+      method: httpList.value[index].method, 
+      headers: {
+        ...JSON.parse(receivedCode.value.value || '{}'),
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      },
+      interval:parseInt(httpList.value[index].interval) || 0,
+    };
+  }
+
+  meta2d.connectNetwork();//建立通信
+  meta2d.render();
+}
+
+const pen = ref<any>({
+});
+
+const handleConfirms = (code: string) => {
+  receivedCode.value.value = code;
+  console.log('Received code:', receivedCode.value.value);
+  isModalVisible.value = false;
+};
+
+const handleCancels = () => {
+  console.log('Cancel event received');
+  isModalVisible.value = false;
+};
 
 function sendWsMessage() {
   // 这里可以添加发送 WebSocket 消息的逻辑
   console.log('发送消息:', sendMessage.value);
+
+  
+  // meta2d.setOptions();
 }
+onMounted(() => {
+  console.log(meta2d.store.data.networks);
+  if (meta2d.store.data.networks) {
+    httpList.value = meta2d.store.data.networks.map(network => ({
+      method: network.method || '',
+      url: network.url || '',
+      interval: network.interval?.toString() || '',
+      headers: network.headers || {},
+    }));
+    console.log(httpList.value);
+    
+  } else {
+    httpList.value = [{ method: '', url: '', interval: ''}];
+  }
+})
+
 </script>
 
 <style lang="postcss">
