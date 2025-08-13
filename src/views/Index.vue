@@ -44,6 +44,8 @@ onMounted(() => {
   meta2d.on('delete', save);
   meta2d.on('rotatePens', save);
   meta2d.on('translatePens', save);
+  //建立通信
+  meta2d.connectNetwork();
 });
 </script>
 
