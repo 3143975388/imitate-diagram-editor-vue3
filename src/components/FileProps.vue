@@ -36,14 +36,28 @@
         />
       </t-form-item>
       <t-form-item label="背景图片" name="bkImage">
-        <!-- <t-color-picker
-          class="w-full"
-          v-model="data.background"
-          :show-primary-color-preview="false"
-          format="CSS"
-          :color-modes="['monochrome']"
-          @change="onChangeData"
-        /> -->
+      <t-space>
+        <t-upload
+          ref="uploadRef1"
+          v-model="file1"
+          :image-viewer-props="imageViewerProps"
+          :size-limit="sizeLimit"
+          theme="image"
+          accept="image/*"
+          :disabled="disabled"
+          :auto-upload="autoUpload"
+          :show-image-file-name="showImageFileName"
+          :max="1"
+          :request-method="customUploadMethod"
+          :locale="{
+            triggerUploadText: {
+              image: '请选择图片',
+            },
+          }"
+          @success="handleSuccess"
+          @fail="handleFail"
+        />
+      </t-space>
       </t-form-item>
       <t-form-item label="网格" name="grid">
         <t-switch v-model="options.grid" @change="onChangeOptions" />
@@ -103,7 +117,17 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, reactive } from 'vue';
+import { onMounted, reactive,ref } from 'vue';
+import { MessagePlugin } from 'tdesign-vue-next';
+import { uploadFile } from '@/api/photo/photo'; // 导入您的上传API
+// 背景图片上传数据
+const file1 = ref<any[]>([]); 
+
+const imageViewerProps = ref({ closeOnEscKeydown: false });
+const sizeLimit = ref({ size: 500, unit: 'KB' });
+const disabled = ref(false);
+const autoUpload = ref(true);
+const showImageFileName = ref(false);
 
 // 图纸数据
 const data = reactive<any>({
@@ -120,19 +144,77 @@ const options = reactive<any>({
   gridColor: undefined,
   rule: undefined,
   background: undefined,
+  bkImage: undefined,
 });
+
+// 自定义上传方法
+const customUploadMethod = async (files: any): Promise<any> => {
+  try {
+    // 处理单文件上传（因为设置了 max=1）
+    const file = Array.isArray(files) ? files[0] : files;
+    
+    if (!file?.raw) {
+      throw new Error('无效的文件');
+    }
+    
+    // 创建 FormData（只包含文件）
+    const formData = new FormData();
+    formData.append('file', file.raw);
+    
+    // 调用您的上传接口
+    const response = await uploadFile(formData);
+    
+    // 返回上传成功响应
+    return {
+      status: 'success',
+      response: response
+    };
+  } catch (error) {
+    console.error('上传失败:', error);
+    
+    // 返回上传失败响应
+    return {
+      status: 'fail',
+      error: '上传失败',
+    };
+  }
+};
+
+const handleFail = (context: any) => {
+  const fileName = context.file?.name || '未知文件';
+  MessagePlugin.error(`文件 ${fileName} 上传失败: ${context.response?.error || '未知错误'}`);
+};
+
+const handleSuccess = (context: any) => {
+  console.log('上传成功', context);
+  
+  const imageUrl = context.file.response?.data?.url;
+  
+  if (!imageUrl) {
+    MessagePlugin.error('获取图片URL失败');
+    return;
+  }
+  meta2d.store.data.bkImage = imageUrl;
+  meta2d.render();
+};
 
 onMounted(() => {
   const d: any = meta2d.data();
   data.name = d.name || '';
   data.background = d.background;
   data.color = d.color;
-
+  if(d.bkImage) {
+    file1.value = [{
+      name: '背景图片',
+      url: d.bkImage,
+      raw: null, // raw 需要在上传时设置
+    }];
+  }
   Object.assign(options, meta2d.getOptions());
 });
 
 const onChangeData = () => {
-  console.log(data);
+  console.log(options);
   console.log(meta2d.store.data);
   Object.assign(meta2d.store.data, data);
   meta2d.store.patchFlagsBackground = true;
@@ -140,6 +222,7 @@ const onChangeData = () => {
 };
 
 const onChangeOptions = () => {
+  console.log(options.value);
   meta2d.setOptions(options);
   meta2d.store.patchFlagsTop = true;
   meta2d.store.patchFlagsBackground = true;
