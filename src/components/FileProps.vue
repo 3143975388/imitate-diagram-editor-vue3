@@ -56,6 +56,7 @@
           }"
           @success="handleSuccess"
           @fail="handleFail"
+          @remove="handleRemove"
         />
       </t-space>
       </t-form-item>
@@ -195,7 +196,22 @@ const handleSuccess = (context: any) => {
     return;
   }
   meta2d.store.data.bkImage = imageUrl;
+  meta2d.setBackgroundImage(imageUrl);
   meta2d.render();
+};
+
+// 新增删除处理函数
+const handleRemove = (context: any) => {
+  // 从画布数据中移除背景图片
+  meta2d.store.data.bkImage = undefined;
+  // 从options中移除背景图片
+  options.bkImage = undefined;
+  // 清空上传文件列表
+  file1.value = [];
+  meta2d.setBackgroundImage('');
+  meta2d.render();
+  // 刷新这个页面
+  MessagePlugin.success('背景图片已删除');
 };
 
 onMounted(() => {
