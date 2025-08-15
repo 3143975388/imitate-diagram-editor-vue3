@@ -91,11 +91,12 @@
 </template>
 
 <script lang="ts" setup>
-  import { ref, onMounted } from 'vue';
+  import { ref, onMounted,onBeforeUnmount } from 'vue';
   import { addScadaPaperImage,getScadaPaperImageList,addScadaDirectory,getScadaDirectory,deleteScadaPaperImage,deleteScadaDirectory,getInfo } from '@/api/photo/photo.ts';
   // import { TreeNode } from 'tdesign-vue-next';
   import { MessagePlugin } from 'tdesign-vue-next';
   import { Message as TMessage } from 'tdesign-vue-next';
+  import emitter from '@/utils/pageEventBus';
 
   // 储存当前用户信息
   const userName = ref('');
@@ -180,7 +181,7 @@
 
   // 添加子节点方法
   function append(node: any) {
-    meta2d.open({ name: '新建项目', pens: [] } as any);
+    meta2d.open({ name: '新建项目',folder: node.fullPath,component:'0', pens: [] } as any); 
     const photoData = {
       folder: node.fullPath, // 使用当前节点的fullPath作为新图纸的路径
       component:'0',
@@ -237,6 +238,7 @@
   function imageClick(itemT: any) {
     // 这里可以根据需要处理点击图片的逻辑
     meta2d.open(JSON.parse(itemT.data));
+    localStorage.setItem('dataId', JSON.stringify({dataId: itemT.id}));
   }
   
   // 获取图纸列表
@@ -281,6 +283,8 @@
   }
 
   onMounted(() => {
+    // 监听刷新事件
+    emitter.on('refresh-drawings', getImageList);
     // 获取当前用户信息
     getInfo().then((res: any) => {
       if (res.code === 200) {
@@ -292,6 +296,11 @@
         TMessage.error('获取用户信息失败');
       }
     });
+  });
+
+  onBeforeUnmount(() => {
+    // 组件卸载时移除监听
+    emitter.off('refresh-drawings', getImageList);
   });
 </script>
 <style lang="postcss" scoped>

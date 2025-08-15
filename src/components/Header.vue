@@ -244,40 +244,13 @@ import { Pen, PenType, deepClone } from '@meta2d/core';
 import FileSaver from 'file-saver';
 import { MessagePlugin } from 'tdesign-vue-next';
 import { file } from '@meta2d/core/src/diagrams';
+import emitter from '@/utils/pageEventBus';
 
+function refreshDrawings() {
+  // 触发刷新事件
+  emitter.emit('refresh-drawings');
+}
 const router = useRouter();
-
-// const assets = reactive({
-//   home: 'https://le5le.com',
-//   helps: [
-//     {
-//       name: '产品介绍',
-//       url: 'https://doc.le5le.com/document/118756411',
-//     },
-//     {
-//       name: '快速上手',
-//       url: 'https://doc.le5le.com/document/119363000',
-//     },
-//     {
-//       name: '使用手册',
-//       url: 'https://doc.le5le.com/document/118764244',
-//     },
-//     {
-//       name: '快捷键',
-//       url: 'https://doc.le5le.com/document/119620214',
-//       divider: true,
-//     },
-//     {
-//       name: '企业服务与支持',
-//       url: 'https://doc.le5le.com/document/119296274',
-//       divider: true,
-//     },
-//     {
-//       name: '关于我们',
-//       url: 'https://le5le.com/about.html',
-//     },
-//   ],
-// });
 
 const isDrawLine = ref<boolean>(false);
 
@@ -470,30 +443,34 @@ const saveDraw = () => {
     if (res.code === 200) {
       MessagePlugin.success('上传成功');
       // 获取图纸列表
-      console.log(res.data.url);
-      const data: any = meta2d.data();
+      const data: any = meta2d.data(); 
       // 从 localStorage 获取 photoData
       const photoDatas = localStorage.getItem('photoData');
       if (photoDatas) {
         // 如果存在 photoData，销毁photoData
         localStorage.removeItem('photoData');
-        const dataPhoto = JSON.parse(photoDatas);
         const photoData = {
-          folder: dataPhoto.folder || 'default', // 使用当前节点的fullPath作为新图纸的路径
+          folder: data?.folder || 'default', // 使用当前节点的fullPath作为新图纸的路径
           name: data.name || '新图纸', // 使用图纸名称或默认名称
           component: '0',
           data: JSON.stringify(data), // 图纸数据
           image: res.data.url, // 图纸图片
         };
-        addScadaPaperImage(photoData).then(() => {
+        addScadaPaperImage(photoData).then((ress:any) => {
           MessagePlugin.success('新增图纸成功');
+          localStorage.setItem('dataId', JSON.stringify({dataId: ress.data}));
+          (meta2d.store.data as any).nodeId = ress.data;
+          meta2d.render();
         });
       } else {
+        const dataIdItem = localStorage.getItem('dataId');
+        const dataIdValue = dataIdItem ? JSON.parse(dataIdItem) : null;
         // 如果不存在 photoData，直接更新图纸
         const photoData = {
-          // folder: data.photoData?.folder || 'default', // 使用当前节点的fullPath作为新图纸的路径
+          // folder: data?.folder || 'default', // 使用当前节点的fullPath作为新图纸的路径
           name: data.name || '新图纸', // 使用图纸名称或默认名称
           // component: '0',
+          id: data.nodeId?data.nodeId:dataIdValue.dataId,
           data: JSON.stringify(data), // 图纸数据
           image: res.data.url, // 图纸图片
         };
@@ -502,7 +479,7 @@ const saveDraw = () => {
           MessagePlugin.success('更新图纸成功');
         });
       }
-
+      refreshDrawings(); // 刷新图纸列表
     } else {
       MessagePlugin.error('上传失败');
     }
