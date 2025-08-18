@@ -36,29 +36,29 @@
         />
       </t-form-item>
       <t-form-item label="背景图片" name="bkImage">
-      <t-space>
-        <t-upload
-          ref="uploadRef1"
-          v-model="file1"
-          :image-viewer-props="imageViewerProps"
-          :size-limit="sizeLimit"
-          theme="image"
-          accept="image/*"
-          :disabled="disabled"
-          :auto-upload="autoUpload"
-          :show-image-file-name="showImageFileName"
-          :max="1"
-          :request-method="customUploadMethod"
-          :locale="{
-            triggerUploadText: {
-              image: '请选择图片',
-            },
-          }"
-          @success="handleSuccess"
-          @fail="handleFail"
-          @remove="handleRemove"
-        />
-      </t-space>
+        <t-space>
+          <t-upload
+            ref="uploadRef1"
+            v-model="file1"
+            :image-viewer-props="imageViewerProps"
+            :size-limit="sizeLimit"
+            theme="image"
+            accept="image/*"
+            :disabled="disabled"
+            :auto-upload="autoUpload"
+            :show-image-file-name="showImageFileName"
+            :max="1"
+            :request-method="customUploadMethod"
+            :locale="{
+              triggerUploadText: {
+                image: '请选择图片',
+              },
+            }"
+            @success="handleSuccess"
+            @fail="handleFail"
+            @remove="handleRemove"
+          />
+        </t-space>
       </t-form-item>
       <t-form-item label="网格" name="grid">
         <t-switch v-model="options.grid" @change="onChangeOptions" />
@@ -125,7 +125,7 @@ import { uploadFile } from '@/api/photo/photo'; // 导入您的上传API
 const file1 = ref<any[]>([]); 
 
 const imageViewerProps = ref({ closeOnEscKeydown: false });
-const sizeLimit = ref({ size: 500, unit: 'KB' });
+const sizeLimit = ref({ size: 5000, unit: 'KB' });
 const disabled = ref(false);
 const autoUpload = ref(true);
 const showImageFileName = ref(false);
@@ -140,10 +140,14 @@ const data = reactive<any>({
 // 画布选项
 const options = reactive<any>({
   grid: false,
+  lineCross: false,
+  autoSizeinPc: false,
+  autoSizeinMobile: false,
+  previewUnScale: false,
+  rule: false,
   gridSize: 10,
   gridRotate: undefined,
   gridColor: undefined,
-  rule: undefined,
   background: undefined,
   bkImage: undefined,
 });

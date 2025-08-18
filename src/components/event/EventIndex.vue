@@ -1,9 +1,14 @@
 <template>
   <t-space style="width: 100%;border: none;" direction="vertical">
-    <t-button @click="addEvent">添加事件</t-button>
-    <t-button @click="removeAllEvents">删除所有事件</t-button>
+    <t-button style="width: 100%;" @click="addEvent">添加事件</t-button>
+    <!-- <t-button @click="removeAllEvents">删除所有事件</t-button> -->
     <t-collapse v-if="events.length > 0" :current-item="currentItem" expand-icon-placement="right" expand-mutex @change="">
       <t-collapse-panel v-for="(event, index) in events" :key="index" :value="index + 1" :header="`事件 ${index + 1}`">
+        <template #headerRightContent>
+          <t-space size="small">
+            <t-icon @click="removeEvent(index)" name="delete" />
+          </t-space>
+        </template>
         <template v-slot:default>
           <t-form label-align="left">
             <t-form-item label="事件类型：" name="name" >
@@ -102,10 +107,7 @@
             
             <!-- 弹窗JS -->
             <CodeMirrorModal ref="codeMirrorModalRef" :visible="isModalVisible" :initialValue="initialValue" @confirm="handleConfirms" @cancel="handleCancels" />
-            <t-form-item>
-              <t-button style="float: left;" @click="handleConfirm(index)">确认事件</t-button>
-              <t-button @click="removeEvent(index)">删除</t-button>
-            </t-form-item>
+            <t-button style="width: 100%;" @click="handleConfirm(index)">确认事件</t-button>
           </t-form>
         </template>
       </t-collapse-panel>
@@ -337,7 +339,9 @@ onUnmounted(() => {
 .t-collapse-panel__wrapper .t-collapse-panel__content {
   color: #ffffff !important;
 }
-
+.t-collapse-panel__wrapper .t-collapse-panel__content{
+  padding: 10px !important;
+}
 .t-form__label {
   font-size: 12px !important;
 }

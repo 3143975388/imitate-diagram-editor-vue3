@@ -164,42 +164,48 @@ const items = ref<any[]>([]);
 
 const dragStart = (e: DragEvent, elem: any) => {
   if (!elem) return;
-  console.log(elem);
-  // 克隆数据避免污染原始配置
-  const cloneData = elem.data;
-  console.log(e.dataTransfer);
+  
+  // 创建图片元数据 - 指定固定尺寸
+  const data = {
+    name: 'image',
+    image: elem.url,
+    x: 0,
+    y: 0,
+    width: 64,  // 固定宽度
+    height: 64, // 固定高度
+    // 其他可能的属性...
+  };
+
   // 拖拽数据传输
   if (e.dataTransfer) {
     console.log('拖拽开始');
+    
+    // 创建临时图片用于拖拽预览
     const dragImage = document.createElement('img');
-    dragImage.src = elem.url || ''; 
-    dragImage.style.width = '50px'; 
-    dragImage.style.height = '50px';
-    console.log(dragImage);
-    document.body.appendChild(dragImage); 
-    e.dataTransfer.setDragImage(dragImage, 25, 25); 
-    setTimeout(() => document.body.removeChild(dragImage), 0);
-  } else if (elem.type === 'gif') {
-    cloneData.gif = elem.url; 
+    dragImage.src = elem.url || '';
+    dragImage.style.width = '64px';
+    dragImage.style.height = '64px';
+    dragImage.style.objectFit = 'cover'; // 保持比例
+    
+    // 添加到DOM（但不可见）
+    dragImage.style.position = 'fixed';
+    dragImage.style.top = '-1000px';
+    dragImage.style.left = '-1000px';
+    document.body.appendChild(dragImage);
+    
+    dragImage.onload = () => {
+      // 设置拖拽图像（居中）
+      e.dataTransfer?.setDragImage(dragImage, 32, 32);
+      // 清理临时图片
+      setTimeout(() => document.body.removeChild(dragImage), 0);
+    };
+    
+    // 传递数据给 Meta2D
+    e.dataTransfer.setData('Meta2d', JSON.stringify(data));
+    e.dataTransfer.effectAllowed = 'copy';
   } else {
-    meta2d.canvas.addCaches = [cloneData];
-  }
-};
-
-// 拖拽原来的函数
-const dragStartOriginally = (e: any, elem: any) => {
-  if (!elem) {
-    return;
-  }
-  e.stopPropagation();
-
-  // 拖拽事件
-  if (e instanceof DragEvent) {
-    // 设置拖拽数据
-    e.dataTransfer?.setData('Meta2d', JSON.stringify(elem.data));
-  } else {
-    // 支持单击添加图元。平板模式
-    meta2d.canvas.addCaches = [elem.data];
+    // 平板模式处理
+    meta2d.canvas.addCaches = [data];
   }
 };
 
