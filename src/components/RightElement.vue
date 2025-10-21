@@ -7,11 +7,12 @@
       <t-tab-panel class="app-props-tabs" :value="2" label="通信">
         <Correspondence />
       </t-tab-panel>
-      <t-tab-panel class="app-props" :value="3" label="布局">
-      </t-tab-panel>
-      <t-tab-panel class="app-props" :value="4" label="结构">
+      <!-- <t-tab-panel class="app-props" :value="3" label="布局">
+        <Layout />
+      </t-tab-panel> -->
+      <!-- <t-tab-panel class="app-props" :value="4" label="结构">
         <Structure />
-      </t-tab-panel>
+      </t-tab-panel> -->
     </t-tabs>
     <t-tabs :default-value="1" v-else-if="selections.mode === SelectionMode.Pen">
       <t-tab-panel class="app-props" :value="1" label="外观">
@@ -26,8 +27,9 @@
       <t-tab-panel class="app-props" :value="4" label="数据">
         <Data />
       </t-tab-panel>
-      <t-tab-panel class="app-props" :value="5" label="结构">
-      </t-tab-panel>
+      <!-- <t-tab-panel class="app-props" :value="5" label="结构">
+        <Structure />
+      </t-tab-panel> -->
     </t-tabs>
   </div>
 </template>
@@ -39,6 +41,7 @@ import PenProps from './PenProps.vue';
 import Event from './event/EventIndex.vue';
 import Data from './Data.vue';
 import Correspondence from './Correspondence.vue'
+import Layout from './ly.vue';
 import Structure from './Structure.vue';
 import { useSelection, SelectionMode } from '@/services/selections';
 
@@ -52,15 +55,9 @@ const { selections } = useSelection();
 .app-props {
   padding: 16px;
   border-left: 1px solid var(--color-border);
-  z-index: 2;
-  height: calc(100vh - 80px);
-  overflow-y: auto;
 }
 
 .app-props-tabs {
   border-left: 1px solid var(--color-border);
-  z-index: 2;
-  height: calc(100vh - 80px);
-  overflow-y: auto;
 }
 </style>

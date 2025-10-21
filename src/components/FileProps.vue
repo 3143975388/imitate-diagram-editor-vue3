@@ -28,11 +28,11 @@
       <t-form-item label="背景颜色" name="background">
         <t-color-picker
           class="w-full"
-          v-model="options.background"
+          v-model="data.background"
           :show-primary-color-preview="false"
           format="CSS"
           :color-modes="['monochrome']"
-          @change="onChangeOptions"
+          @change="onChangeData"
         />
       </t-form-item>
       <t-form-item label="背景图片" name="bkImage">
@@ -92,7 +92,7 @@
         <t-switch v-model="options.autoSizeinMobile" @change="onChangeOptions" />
       </t-form-item>
       <t-form-item label="预览不充满窗口" name="previewUnScale">
-        <t-switch v-model="options.previewUnScale" @change="onChangeOptions" />
+        <t-switch v-model="data.previewUnScale" @change="onChangeOptions" />
       </t-form-item>
       
       <t-divider />
@@ -239,6 +239,7 @@ const onChangeData = () => {
   Object.assign(meta2d.store.data, data);
   meta2d.store.patchFlagsBackground = true;
   meta2d.render();
+  onChangeOptions();
 };
 
 const onChangeOptions = () => {

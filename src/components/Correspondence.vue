@@ -34,7 +34,7 @@
         <t-form label-align="left">
           <t-form-item label="消息处理：" name=""><t-button @click="showModal">...</t-button></t-form-item>
         </t-form>
-        <!-- <CodeMirrorModal ref="codeMirrorModalRef" :visible="isModalVisible" :initialValue="initialValue" @confirm="handleConfirms" @cancel="handleCancels" /> -->
+        <CodeMirrorModal ref="codeMirrorModalRefTwo" :visible="isModalVisibleTwo" :initialValue="initialValueTwo" @confirm="handleConfirmsTwo" @cancel="handleCancelsTwo" />
       </t-collapse-panel>
       <t-collapse-panel value="2" header="获取变量树">
         <t-form label-align="left">
@@ -45,7 +45,7 @@
             <t-button @click="showModal">...</t-button>
           </t-form-item>
         </t-form>
-        <!-- <CodeMirrorModal ref="codeMirrorModalRef" :visible="isModalVisible" :initialValue="initialValue" @confirm="handleConfirms" @cancel="handleCancels"/> -->
+        <CodeMirrorModal ref="codeMirrorModalRefThree" :visible="isModalVisibleThree" :initialValue="initialValueThree" @confirm="handleConfirmsThree" @cancel="handleCancelsThree" />
       </t-collapse-panel>
     </t-collapse>
     <t-button @click="addHttp">添加http通信</t-button>
@@ -62,14 +62,23 @@ const httpList = ref<Array<{ method: string; url: string; interval: string; }>>(
   { method: '', url: '', interval: '' }
 ]);
 
+// http请求头框数据
 const codeMirrorModalRef = ref<InstanceType<typeof CodeMirrorModal> | null>(null);
 const isModalVisible = ref(false);
 const initialValue = ref('');
 const receivedCode = ref({ value: '' });
 
-const modalVisible = ref(false);
-const code = ref('');
+// 消息处理的模态框
+const codeMirrorModalRefTwo = ref<InstanceType<typeof CodeMirrorModal> | null>(null);
+const isModalVisibleTwo = ref(false);
+const initialValueTwo = ref('');
+const receivedCodeTwo = ref({ value: '' });
 
+// 获取变量树的模态框
+const codeMirrorModalRefThree = ref<InstanceType<typeof CodeMirrorModal> | null>(null);
+const isModalVisibleThree = ref(false);
+const initialValueThree = ref('');
+const receivedCodeThree = ref({ value: '' });
 const showModal = async(index: number) => {
   console.log(index);
   
@@ -88,10 +97,6 @@ const showModal = async(index: number) => {
   } else {
     console.warn('codeMirrorModalRef 未定义或为 null');
   }
-};
-
-const handleCodeChange = (newCode: string) => {
-  code.value = newCode;
 };
 
 function addHttp() {
@@ -145,9 +150,6 @@ function confirm(index: number) {
   meta2d.render();
 }
 
-const pen = ref<any>({
-});
-
 const handleConfirms = (code: string) => {
   receivedCode.value.value = code;
   console.log('Received code:', receivedCode.value.value);
@@ -159,13 +161,6 @@ const handleCancels = () => {
   isModalVisible.value = false;
 };
 
-function sendWsMessage() {
-  // 这里可以添加发送 WebSocket 消息的逻辑
-  console.log('发送消息:', sendMessage.value);
-
-  
-  // meta2d.setOptions();
-}
 onMounted(() => {
   console.log(meta2d.store.data.networks);
   if (meta2d.store.data.networks) {
